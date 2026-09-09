@@ -243,21 +243,23 @@ const CATEGORIES = [
     options:[ opt('Deep Brown','Coklat Tua'), opt('Brown','Coklat'), opt('Hazel','Hazel (Coklat Kehijauan)'), opt('Green','Hijau'), opt('Blue','Biru'), opt('Grey','Abu-abu'), opt('Heterochromia (Two Different Colors)','Heterokromia (Dua Warna Berbeda)') ] },
   { id:'faceQuality', tag:'08', title:'Kualitas Wajah / Daya Tarik', hint:'Boleh pilih lebih dari satu, atau tulis sendiri. Menambahkan detail yang membuat wajah karakter dewasa terlihat lebih menarik &amp; fotogenik.', type:'multi', custom:true,
     options:[ opt('Symmetrical, Well-Proportioned Face','Wajah Simetris & Proporsional'), opt('Glowing, Healthy Skin','Kulit Glowing & Sehat'), opt('Flawless, Clear Complexion','Kulit Mulus Tanpa Noda'), opt('Bright, Expressive Eyes','Mata Berbinar & Ekspresif'), opt('Neatly Groomed Eyebrows','Alis Rapi'), opt('Warm, Natural Smile','Senyum Natural & Hangat'), opt('High-Fashion Model Features','Fitur Wajah Model Kelas Atas'), opt('Editorial-Quality Photogenic Look','Kualitas Foto Editorial Profesional') ] },
-  { id:'shot', tag:'09', title:'Sudut &amp; Jenis Shot', hint:'Menentukan komposisi kamera di video/foto. Pilih "Headshot Studio Bahu ke Atas" kalau tujuannya membuat foto REFERENSI WAJAH karakter (untuk Nano Banana 2, Google Flow, dll) — hasil prompt akan otomatis dipecah per bagian (Prompt, Face &amp; Features, Hair, Clothing, Accessories, Expression &amp; Pose, Style notes).', type:'single', custom:false,
+  { id:'noseShape', tag:'09', title:'Bentuk Hidung', hint:'Pilih salah satu, atau tulis sendiri.', type:'single', custom:true,
+    options:[ opt('Straight Nose','Hidung Lurus'), opt('Small, Delicate Nose','Hidung Kecil & Halus'), opt('Aquiline (Slightly Curved) Nose','Hidung Mancung Melengkung (Aquiline)'), opt('Button Nose','Hidung Pesek Mungil (Button Nose)'), opt('Wide Nose','Hidung Lebar'), opt('Upturned Nose','Hidung Sedikit Mendongak'), opt('Roman Nose','Hidung Romawi (Roman Nose)') ] },
+  { id:'shot', tag:'10', title:'Sudut &amp; Jenis Shot', hint:'Menentukan komposisi kamera di video/foto. Pilih "Headshot Studio Bahu ke Atas" kalau tujuannya membuat foto REFERENSI WAJAH karakter (untuk Nano Banana 2, Google Flow, dll) — hasil prompt akan otomatis dipecah per bagian (Prompt, Face &amp; Features, Hair, Clothing, Accessories, Expression &amp; Pose, Style notes).', type:'single', custom:false,
     options:[ opt('Eye-level Medium Portrait','Potret Sedang, Sejajar Mata'), opt('Close-up Portrait','Potret Close-up'), opt('Full Body Shot','Seluruh Badan'), opt('Three-quarter Shot','Tiga Perempat Badan'), opt('Over-the-shoulder Shot','Dari Belakang Bahu'), opt('Shoulder-up Studio Headshot (White Background)','Headshot Studio Bahu ke Atas — Background Putih (Referensi Wajah)') ] },
-  { id:'render', tag:'10', title:'Gaya Render', hint:'Untuk video promosi produk nyata, gunakan Fotografi Hiper-Realistis.', type:'single', custom:true,
+  { id:'render', tag:'11', title:'Gaya Render', hint:'Untuk video promosi produk nyata, gunakan Fotografi Hiper-Realistis.', type:'single', custom:true,
     options:[ opt('Hyper-Realistic Photography','Fotografi Hiper-Realistis'), opt('Cinematic Film','Film Sinematik'), opt('Editorial Fashion','Editorial Fashion'), opt('3D Animation','Animasi 3D'), opt('2D Animation','Animasi 2D'), opt('Anime / Manga','Anime / Manga') ] },
-  { id:'personality', tag:'11', title:'Kepribadian', hint:'Boleh pilih lebih dari satu. Ini sifat dasar karakter (jangka panjang).', type:'multi', custom:true,
+  { id:'personality', tag:'12', title:'Kepribadian', hint:'Boleh pilih lebih dari satu. Ini sifat dasar karakter (jangka panjang).', type:'multi', custom:true,
     options:[ opt('Confident','Percaya Diri'), opt('Playful','Ceria / Jenaka'), opt('Mysterious','Misterius'), opt('Elegant','Elegan'), opt('Bold','Berani'), opt('Serene','Tenang'), opt('Rebellious','Pemberontak'), opt('Sophisticated','Berkelas'), opt('Charismatic','Karismatik'), opt('Introspective','Introspektif') ] },
-  { id:'role', tag:'12', title:'Peran', hint:'Boleh pilih lebih dari satu, atau tulis peran khusus.', type:'multi', custom:true,
+  { id:'role', tag:'13', title:'Peran', hint:'Boleh pilih lebih dari satu, atau tulis peran khusus.', type:'multi', custom:true,
     options:[ opt('Fashion Model','Model Fashion'), opt('Streetwear Influencer','Influencer Streetwear'), opt('Customer','Pelanggan'), opt('Shop Staff','Pramuniaga'), opt('Fitness Coach','Pelatih Kebugaran'), opt('Travel Vlogger','Vlogger Traveling'), opt('Musician / Artist','Musisi / Seniman'), opt('Tech Reviewer','Reviewer Teknologi') ] },
-  { id:'expression', tag:'13', title:'Ekspresi', hint:'Boleh pilih lebih dari satu. Ini ekspresi di momen/scene tertentu.', type:'multi', custom:true,
+  { id:'expression', tag:'14', title:'Ekspresi', hint:'Boleh pilih lebih dari satu. Ini ekspresi di momen/scene tertentu.', type:'multi', custom:true,
     options:[ opt('Confident Smile','Senyum Percaya Diri'), opt('Smirk','Senyum Sinis'), opt('Serious / Stoic','Serius / Stoik'), opt('Playful Wink','Kedipan Jenaka'), opt('Sultry Gaze','Tatapan Menggoda'), opt('Warm Laugh','Tawa Hangat'), opt('Neutral Calm','Tenang Netral'), opt('Intense Stare','Tatapan Tajam') ] },
-  { id:'clothingType', tag:'14', title:'Jenis Pakaian', hint:'Boleh pilih lebih dari satu (misal Kaos + Jeans), atau tulis sendiri.', type:'multi', custom:true,
+  { id:'clothingType', tag:'15', title:'Jenis Pakaian', hint:'Boleh pilih lebih dari satu (misal Kaos + Jeans), atau tulis sendiri.', type:'multi', custom:true,
     options:[ opt('T-shirt','Kaos'), opt('Short Skirt','Rok Pendek'), opt('Long Skirt','Rok Panjang'), opt('Shorts','Celana Pendek'), opt('Long Fabric Pants','Celana Panjang (Kain)'), opt('Jeans','Jeans') ] },
-  { id:'clothingColor', tag:'15', title:'Warna Pakaian', hint:'Boleh pilih lebih dari satu, atau tulis sendiri.', type:'multi', custom:true,
+  { id:'clothingColor', tag:'16', title:'Warna Pakaian', hint:'Boleh pilih lebih dari satu, atau tulis sendiri.', type:'multi', custom:true,
     options:[ opt('Black','Hitam'), opt('White','Putih'), opt('Grey','Abu-abu'), opt('Navy Blue','Navy'), opt('Blue','Biru'), opt('Red','Merah'), opt('Beige','Krem'), opt('Brown','Coklat'), opt('Green','Hijau'), opt('Yellow','Kuning'), opt('Pink','Pink'), opt('Purple','Ungu') ] },
-  { id:'accessories', tag:'16', title:'Aksesoris', hint:'Boleh pilih lebih dari satu, atau tulis sendiri. Kosongkan / pilih "Tanpa Aksesoris" untuk tampilan polos.', type:'multi', custom:true,
+  { id:'accessories', tag:'17', title:'Aksesoris', hint:'Boleh pilih lebih dari satu, atau tulis sendiri. Kosongkan / pilih "Tanpa Aksesoris" untuk tampilan polos.', type:'multi', custom:true,
     options:[ opt('Thin Gold Necklace','Kalung Tipis Emas'), opt('Thin Silver Necklace','Kalung Tipis Perak'), opt('Small Stud Earrings','Anting Kecil'), opt('Hoop Earrings','Anting Bulat (Hoop)'), opt('Delicate Bracelet','Gelang Tipis'), opt('Rings','Cincin'), opt('Glasses','Kacamata'), opt('Hat / Headwear','Topi / Penutup Kepala'), opt('No Accessories (Minimal Look)','Tanpa Aksesoris (Polos)') ] },
 ];
 
@@ -340,7 +342,7 @@ function renderCategories(){
   extra.innerHTML = `
     <div class="cat-head">
       <div class="cat-title-group">
-        <span class="cat-tag">17</span>
+        <span class="cat-tag">18</span>
         <span class="cat-title">Detail Tambahan</span>
       </div>
     </div>
@@ -456,6 +458,7 @@ function buildHeadshotPrompt(vals, otherFeaturesEn){
   const faceBits = [];
   if(vals.eyeColor.length) faceBits.push(`${vals.eyeColor[0]} eyes`);
   if(vals.faceQuality.length) faceBits.push(vals.faceQuality.join(', ').toLowerCase());
+  if(vals.noseShape.length) faceBits.push(vals.noseShape[0].toLowerCase());
   let faceLine = faceBits.length
     ? `${faceBits.join(', ').replace(/^./, s=>s.toUpperCase())}.`
     : 'Natural, well-proportioned facial features.';
@@ -576,6 +579,7 @@ async function generatePrompt(){
       }
       if(vals.eyeColor.length) parts.push(`${vals.eyeColor[0]} eyes`);
       if(vals.faceQuality.length) parts.push(vals.faceQuality.join(', ').toLowerCase());
+      if(vals.noseShape.length) parts.push(vals.noseShape[0].toLowerCase());
       if(vals.expression.length) parts.push(`${vals.expression.join(', ')} expression`);
       if(vals.personality.length) parts.push(`${vals.personality.join(', ')} demeanor`);
       if(vals.clothingType.length){
@@ -609,6 +613,7 @@ async function generatePrompt(){
       ['Rambut', [...toIdLabels('hairStyle', vals.hairStyle), ...toIdLabels('hairColor', vals.hairColor)].join(', ') || '—'],
       ['Mata', toIdLabels('eyeColor', vals.eyeColor).join(', ') || '—'],
       ['Kualitas Wajah / Daya Tarik', toIdLabels('faceQuality', vals.faceQuality).join(', ') || '—'],
+      ['Bentuk Hidung', toIdLabels('noseShape', vals.noseShape).join(', ') || '—'],
       ['Shot', toIdLabels('shot', vals.shot).join(', ') || '—'],
       ['Gaya Render', toIdLabels('render', vals.render).join(', ')],
       ['Kepribadian', toIdLabels('personality', vals.personality).join(', ') || '—'],
