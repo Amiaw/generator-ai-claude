@@ -178,6 +178,7 @@
     <span class="eyebrow-tag">Dibuat dengan Claude (Anthropic)</span>
     <h1>Generator AI Claude</h1>
     <p class="sub">Pilih kategori dan sifat karakter di bawah ini, lalu klik "Generate Prompt". Hasilnya berupa prompt karakter yang detail dan siap pakai di Google Flow, Midjourney, Kling, atau tools AI gambar/video lainnya — supaya wajah, gaya, dan kepribadian karakter tetap konsisten di setiap hasil generate.</p>
+    <p class="sub" style="font-size:12px; color:var(--ink-muted);">Catatan: teks yang diketik sendiri di kolom isian bebas akan dikirim ke layanan terjemahan online (MyMemory) untuk diubah ke Bahasa Inggris. Jangan tulis data pribadi/rahasia di kolom tersebut.</p>
   </header>
 
   <div class="profile-box">
@@ -215,7 +216,7 @@
   <span class="trait-count" id="traitCount">0 sifat dipilih</span>
   <div class="action-buttons">
     <button onclick="resetForm()">Reset</button>
-    <button class="primary" onclick="generatePrompt()">Generate Prompt</button>
+    <button class="primary" id="generateBtn" onclick="generatePrompt()">Generate Prompt</button>
   </div>
 </footer>
 
@@ -285,7 +286,7 @@ function renderCategories(){
       </div>
       <p class="cat-hint">${cat.hint}</p>
       <div class="chip-wrap" id="chips-${cat.id}"></div>
-      ${cat.custom ? `<input type="text" class="custom-input" id="custom-${cat.id}" placeholder="Tambah sendiri dalam Bahasa Inggris, pisahkan dengan koma...">` : ''}
+      ${cat.custom ? `<input type="text" class="custom-input" id="custom-${cat.id}" placeholder="Tambah sendiri (boleh Bahasa Indonesia), pisahkan dengan koma...">` : ''}
     `;
     root.appendChild(section);
 
@@ -320,8 +321,8 @@ function renderCategories(){
         <span class="cat-title">Detail Tambahan</span>
       </div>
     </div>
-    <p class="cat-hint">Detail kulit, tahi lalat/freckles, bekas luka, makeup, perhiasan, aksesoris, tato, atau pakaian spesifik. Tulis dalam Bahasa Inggris karena langsung masuk ke prompt akhir. Tidak diisi otomatis — kalau dikosongkan berarti tidak ada.</p>
-    <textarea id="otherFeatures" placeholder="Contoh: faint freckles across the nose, small gold earrings, wearing an oversized denim jacket..."></textarea>
+    <p class="cat-hint">Detail kulit, tahi lalat/freckles, bekas luka, makeup, perhiasan, aksesoris, tato, atau pakaian spesifik. Boleh ditulis dalam Bahasa Indonesia — akan diterjemahkan otomatis ke Bahasa Inggris saat "Generate Prompt" diklik. Tidak diisi otomatis — kalau dikosongkan berarti tidak ada.</p>
+    <textarea id="otherFeatures" placeholder="Contoh: ada freckles tipis di hidung, pakai anting emas kecil, memakai jaket denim oversized..."></textarea>
   `;
   root.appendChild(extra);
   const otherInput = extra.querySelector('#otherFeatures');
@@ -370,85 +371,142 @@ function toIdLabels(catId, enArr){
   return enArr.map(v => toIdLabel(catId, v));
 }
 
-// ---------- GABUNGKAN NILAI PER KATEGORI ----------
-function getCombinedValues(cat){
-  let vals = [];
-  if(cat.type==='multi') vals = [...selections[cat.id]];
-  else if(selections[cat.id]) vals = [selections[cat.id]];
+// ---------- TERJEMAHAN OTOMATIS (Indonesia -> Inggris) ----------
+// Memakai MyMemory Translation API (gratis, tanpa API key) supaya kolom isian bebas
+// boleh ditulis dalam Bahasa Indonesia, tapi prompt akhir tetap Bahasa Inggris.
+let translateCache = {};
+let translationHadIssue = false;
 
-  if(customTexts[cat.id] && customTexts[cat.id].trim()){
-    const extras = customTexts[cat.id].split(',').map(s=>s.trim()).filter(Boolean);
-    vals = vals.concat(extras);
+async function translateToEnglish(text){
+  const key = text.trim();
+  if(!key) return '';
+  if(translateCache[key]) return translateCache[key];
+  try{
+    const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(key) + '&langpair=id|en';
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Status HTTP tidak OK');
+    const data = await res.json();
+    const translated = data && data.responseData && data.responseData.translatedText;
+    if(!translated) throw new Error('Tidak ada hasil terjemahan');
+    translateCache[key] = translated;
+    return translated;
+  }catch(e){
+    translationHadIssue = true;
+    translateCache[key] = key; // fallback: pakai teks asli kalau terjemahan gagal
+    return key;
   }
-  return vals;
+}
+
+// ---------- GABUNGKAN NILAI PER KATEGORI ----------
+// Nilai dari chip (sudah pasti Bahasa Inggris) dipisah dari fragmen ketikan bebas
+// (bisa Bahasa Indonesia, perlu diterjemahkan dulu sebelum dipakai di prompt).
+function getChipValues(cat){
+  if(cat.type==='multi') return [...selections[cat.id]];
+  return selections[cat.id] ? [selections[cat.id]] : [];
+}
+function getCustomFragments(cat){
+  if(!customTexts[cat.id] || !customTexts[cat.id].trim()) return [];
+  return customTexts[cat.id].split(',').map(s=>s.trim()).filter(Boolean);
 }
 
 // ---------- GENERATE PROMPT ----------
-function generatePrompt(){
-  const vals = {};
-  CATEGORIES.forEach(c=>{ vals[c.id] = getCombinedValues(c); });
+async function generatePrompt(){
+  const btn = document.getElementById('generateBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Menerjemahkan...';
+  translationHadIssue = false;
 
-  const missing = [];
-  if(vals.gender.length===0) missing.push('Jenis Kelamin');
-  if(vals.age.length===0) missing.push('Rentang Usia');
-  if(vals.render.length===0) missing.push('Gaya Render');
+  try{
+    // Kumpulkan semua fragmen isian bebas (per kategori) + Detail Tambahan
+    const customFragMap = {};
+    const allFragments = [];
+    CATEGORIES.forEach(c=>{
+      const frags = getCustomFragments(c);
+      customFragMap[c.id] = frags;
+      allFragments.push(...frags);
+    });
+    const otherFeaturesRaw = otherFeatures.trim();
 
-  if(missing.length>0){
-    alert('Mohon lengkapi dulu: ' + missing.join(', '));
-    return;
-  }
+    const uniqueTexts = [...new Set([...allFragments, otherFeaturesRaw].filter(Boolean))];
+    await Promise.all(uniqueTexts.map(t => translateToEnglish(t)));
 
-  const parts = [];
+    // Gabungkan nilai chip (Inggris) + nilai custom yang sudah diterjemahkan
+    const vals = {};
+    CATEGORIES.forEach(c=>{
+      const chipVals = getChipValues(c);
+      const translatedExtras = customFragMap[c.id].map(f => translateCache[f.trim()] || f);
+      vals[c.id] = chipVals.concat(translatedExtras);
+    });
+    const otherFeaturesEn = otherFeaturesRaw ? (translateCache[otherFeaturesRaw] || otherFeaturesRaw) : '';
 
-  parts.push(vals.age[0]);
-  if(vals.ethnicity.length) parts.push(vals.ethnicity.join(' / '));
-  if(vals.role.length) parts.push(vals.role.join(' / '));
-  parts.push(`${vals.gender[0]} character`);
-  if(vals.shot.length) parts.push(vals.shot[0].toLowerCase());
-  if(vals.body.length) parts.push(`${vals.body[0]} build`);
-  if(vals.hairStyle.length || vals.hairColor.length){
-    let hairPart = vals.hairStyle.length ? `${vals.hairStyle[0]} hairstyle` : 'hairstyle';
-    if(vals.hairColor.length) hairPart += ` in ${vals.hairColor[0]}`;
-    parts.push(hairPart);
-  }
-  if(vals.eyeColor.length) parts.push(`${vals.eyeColor[0]} eyes`);
-  if(vals.expression.length) parts.push(`${vals.expression.join(', ')} expression`);
-  if(vals.personality.length) parts.push(`${vals.personality.join(', ')} demeanor`);
-  if(otherFeatures.trim()) parts.push(otherFeatures.trim());
-  parts.push(`rendered in ${vals.render[0]}`);
-  parts.push('cinematic lighting, shot on an 85mm portrait lens, ultra-detailed skin and fabric textures, professional color grading, soft depth of field, magazine-quality portrait photography');
+    const missing = [];
+    if(vals.gender.length===0) missing.push('Jenis Kelamin');
+    if(vals.age.length===0) missing.push('Rentang Usia');
+    if(vals.render.length===0) missing.push('Gaya Render');
 
-  const finalPrompt = parts.filter(Boolean).join(', ') + '.';
+    if(missing.length>0){
+      alert('Mohon lengkapi dulu: ' + missing.join(', '));
+      return;
+    }
 
-  document.getElementById('resultText').textContent = finalPrompt;
-  document.getElementById('copyNote').textContent = '';
+    const parts = [];
 
-  const table = document.getElementById('summaryTable');
-  table.innerHTML = '';
-  const rows = [
-    ['Jenis Kelamin', toIdLabels('gender', vals.gender).join(', ')],
-    ['Rentang Usia', toIdLabels('age', vals.age).join(', ')],
-    ['Etnis / Asal', toIdLabels('ethnicity', vals.ethnicity).join(', ') || '—'],
-    ['Tipe Tubuh', toIdLabels('body', vals.body).join(', ') || '—'],
-    ['Rambut', [...toIdLabels('hairStyle', vals.hairStyle), ...toIdLabels('hairColor', vals.hairColor)].join(', ') || '—'],
-    ['Mata', toIdLabels('eyeColor', vals.eyeColor).join(', ') || '—'],
-    ['Shot', toIdLabels('shot', vals.shot).join(', ') || '—'],
-    ['Gaya Render', toIdLabels('render', vals.render).join(', ')],
-    ['Kepribadian', toIdLabels('personality', vals.personality).join(', ') || '—'],
-    ['Peran', toIdLabels('role', vals.role).join(', ') || '—'],
-    ['Ekspresi', toIdLabels('expression', vals.expression).join(', ') || '—'],
-    ['Detail Tambahan', otherFeatures.trim() || '—'],
-  ];
-  rows.forEach(([k,v])=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="k">${k}</td><td>${v}</td>`;
-    table.appendChild(tr);
-  });
+    parts.push(vals.age[0]);
+    if(vals.ethnicity.length) parts.push(vals.ethnicity.join(' / '));
+    if(vals.role.length) parts.push(vals.role.join(' / '));
+    parts.push(`${vals.gender[0]} character`);
+    if(vals.shot.length) parts.push(vals.shot[0].toLowerCase());
+    if(vals.body.length) parts.push(`${vals.body[0]} build`);
+    if(vals.hairStyle.length || vals.hairColor.length){
+      let hairPart = vals.hairStyle.length ? `${vals.hairStyle[0]} hairstyle` : 'hairstyle';
+      if(vals.hairColor.length) hairPart += ` in ${vals.hairColor[0]}`;
+      parts.push(hairPart);
+    }
+    if(vals.eyeColor.length) parts.push(`${vals.eyeColor[0]} eyes`);
+    if(vals.expression.length) parts.push(`${vals.expression.join(', ')} expression`);
+    if(vals.personality.length) parts.push(`${vals.personality.join(', ')} demeanor`);
+    if(otherFeaturesEn) parts.push(otherFeaturesEn);
+    parts.push(`rendered in ${vals.render[0]}`);
+    parts.push('cinematic lighting, shot on an 85mm portrait lens, ultra-detailed skin and fabric textures, professional color grading, soft depth of field, magazine-quality portrait photography');
 
-  const resultBox = document.getElementById('resultBox');
-  resultBox.style.display = 'block';
-  if(typeof resultBox.scrollIntoView === 'function'){
-    resultBox.scrollIntoView({behavior:'smooth', block:'start'});
+    const finalPrompt = parts.filter(Boolean).join(', ') + '.';
+
+    document.getElementById('resultText').textContent = finalPrompt;
+    document.getElementById('copyNote').textContent = translationHadIssue
+      ? 'Catatan: sebagian teks isian bebas gagal diterjemahkan otomatis (kemungkinan koneksi internet terputus), jadi dipakai apa adanya. Silakan periksa ulang bagian tersebut di atas.'
+      : '';
+
+    const table = document.getElementById('summaryTable');
+    table.innerHTML = '';
+    const rows = [
+      ['Jenis Kelamin', toIdLabels('gender', vals.gender).join(', ')],
+      ['Rentang Usia', toIdLabels('age', vals.age).join(', ')],
+      ['Etnis / Asal', toIdLabels('ethnicity', vals.ethnicity).join(', ') || '—'],
+      ['Tipe Tubuh', toIdLabels('body', vals.body).join(', ') || '—'],
+      ['Rambut', [...toIdLabels('hairStyle', vals.hairStyle), ...toIdLabels('hairColor', vals.hairColor)].join(', ') || '—'],
+      ['Mata', toIdLabels('eyeColor', vals.eyeColor).join(', ') || '—'],
+      ['Shot', toIdLabels('shot', vals.shot).join(', ') || '—'],
+      ['Gaya Render', toIdLabels('render', vals.render).join(', ')],
+      ['Kepribadian', toIdLabels('personality', vals.personality).join(', ') || '—'],
+      ['Peran', toIdLabels('role', vals.role).join(', ') || '—'],
+      ['Ekspresi', toIdLabels('expression', vals.expression).join(', ') || '—'],
+      ['Detail Tambahan', otherFeaturesRaw || '—'],
+    ];
+    rows.forEach(([k,v])=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="k">${k}</td><td>${v}</td>`;
+      table.appendChild(tr);
+    });
+
+    const resultBox = document.getElementById('resultBox');
+    resultBox.style.display = 'block';
+    if(typeof resultBox.scrollIntoView === 'function'){
+      resultBox.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
 
