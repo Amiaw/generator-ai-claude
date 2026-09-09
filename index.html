@@ -250,6 +250,10 @@ const CATEGORIES = [
     options:[ opt('Fashion Model','Model Fashion'), opt('Streetwear Influencer','Influencer Streetwear'), opt('Customer','Pelanggan'), opt('Shop Staff','Pramuniaga'), opt('Fitness Coach','Pelatih Kebugaran'), opt('Travel Vlogger','Vlogger Traveling'), opt('Musician / Artist','Musisi / Seniman'), opt('Tech Reviewer','Reviewer Teknologi') ] },
   { id:'expression', tag:'12', title:'Ekspresi', hint:'Boleh pilih lebih dari satu. Ini ekspresi di momen/scene tertentu.', type:'multi', custom:true,
     options:[ opt('Confident Smile','Senyum Percaya Diri'), opt('Smirk','Senyum Sinis'), opt('Serious / Stoic','Serius / Stoik'), opt('Playful Wink','Kedipan Jenaka'), opt('Sultry Gaze','Tatapan Menggoda'), opt('Warm Laugh','Tawa Hangat'), opt('Neutral Calm','Tenang Netral'), opt('Intense Stare','Tatapan Tajam') ] },
+  { id:'clothingType', tag:'13', title:'Jenis Pakaian', hint:'Boleh pilih lebih dari satu (misal Kaos + Jeans), atau tulis sendiri.', type:'multi', custom:true,
+    options:[ opt('T-shirt','Kaos'), opt('Short Skirt','Rok Pendek'), opt('Long Skirt','Rok Panjang'), opt('Shorts','Celana Pendek'), opt('Long Fabric Pants','Celana Panjang (Kain)'), opt('Jeans','Jeans') ] },
+  { id:'clothingColor', tag:'14', title:'Warna Pakaian', hint:'Boleh pilih lebih dari satu, atau tulis sendiri.', type:'multi', custom:true,
+    options:[ opt('Black','Hitam'), opt('White','Putih'), opt('Grey','Abu-abu'), opt('Navy Blue','Navy'), opt('Blue','Biru'), opt('Red','Merah'), opt('Beige','Krem'), opt('Brown','Coklat'), opt('Green','Hijau'), opt('Yellow','Kuning'), opt('Pink','Pink'), opt('Purple','Ungu') ] },
 ];
 
 // ---------- STATE ----------
@@ -317,7 +321,7 @@ function renderCategories(){
   extra.innerHTML = `
     <div class="cat-head">
       <div class="cat-title-group">
-        <span class="cat-tag">13</span>
+        <span class="cat-tag">15</span>
         <span class="cat-title">Detail Tambahan</span>
       </div>
     </div>
@@ -466,6 +470,14 @@ async function generatePrompt(){
     if(vals.eyeColor.length) parts.push(`${vals.eyeColor[0]} eyes`);
     if(vals.expression.length) parts.push(`${vals.expression.join(', ')} expression`);
     if(vals.personality.length) parts.push(`${vals.personality.join(', ')} demeanor`);
+    if(vals.clothingType.length){
+      let clothingPart = 'wearing ';
+      if(vals.clothingColor.length) clothingPart += vals.clothingColor.join(' and ') + ' ';
+      clothingPart += vals.clothingType.join(' and ');
+      parts.push(clothingPart);
+    } else if(vals.clothingColor.length){
+      parts.push(`wearing ${vals.clothingColor.join(' and ')} outfit`);
+    }
     if(otherFeaturesEn) parts.push(otherFeaturesEn);
     parts.push(`rendered in ${vals.render[0]}`);
     parts.push('cinematic lighting, shot on an 85mm portrait lens, ultra-detailed skin and fabric textures, professional color grading, soft depth of field, magazine-quality portrait photography');
@@ -491,6 +503,8 @@ async function generatePrompt(){
       ['Kepribadian', toIdLabels('personality', vals.personality).join(', ') || '—'],
       ['Peran', toIdLabels('role', vals.role).join(', ') || '—'],
       ['Ekspresi', toIdLabels('expression', vals.expression).join(', ') || '—'],
+      ['Jenis Pakaian', toIdLabels('clothingType', vals.clothingType).join(', ') || '—'],
+      ['Warna Pakaian', toIdLabels('clothingColor', vals.clothingColor).join(', ') || '—'],
       ['Detail Tambahan', otherFeaturesRaw || '—'],
     ];
     rows.forEach(([k,v])=>{
